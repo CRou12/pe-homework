@@ -368,16 +368,22 @@ print(f"et le nombre de termes dans chaque `sum()` est {A.shape[-1]} == {B.shape
 1. Faites une fonction `sepia` qui prend en argument une image RGB et rend une image RGB sépia
 
 ```{code-cell} ipython3
-# votre 
-
-# hello
-# world
+# votre code
+def sepia(image):
+    B = np.array([[0.393,0.769,0.189],[0.349,0.686,0.168],[0.272,0.534,0.131]])
+    B2 = np.transpose(B)
+    A = image
+    C = A.dot(B2)
+    return np.clip(C, 0, 255).astype(np.uint8)
 ```
 
 2. Passez l'image `data/les-mines.jpg` en sépia
 
 ```{code-cell} ipython3
 # votre code
+im = plt.imread("data/les-mines.jpg")
+print(im.shape, im.dtype)
+plt.imshow(sepia(im))
 ```
 
 Voici ce que vous devriez obtenir avec l'images des Mines
