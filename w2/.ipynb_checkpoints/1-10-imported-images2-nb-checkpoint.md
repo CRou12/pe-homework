@@ -183,7 +183,7 @@ def patchwork(colors, side=10, background=[169, 169, 169]):
     ...
     (l,c)=rectangle_size(len(colors))
     I,J=np.indices((l*side,c*side))
-    indices = I//10*c+J//10
+    indices = I//side*c+J//side
     colormap = np.empty((l*c,3),np.uint8)
     colormap[:len(colors)]=np.array(colors)
     colormap[len(colors):]=background
@@ -247,6 +247,17 @@ pour obtenir ceci
 
 ```{code-cell} ipython3
 # votre code
+colors_file = open('data/rgb-codes.txt','r')
+lines = colors_file.readlines()
+d = {}
+```
+
+```{code-cell} ipython3
+for elem in lines :
+    new = elem.replace('\n','').split(' ')
+    R,G,B=np.uint8(new[1:])
+    d[new[0]]=[R,G,B]
+colors_file.close()
 ```
 
 2. Affichez, à partir de votre structure, les valeurs rgb entières des couleurs suivantes  
@@ -254,6 +265,7 @@ pour obtenir ceci
 
 ```{code-cell} ipython3
 # votre code
+print(d['Red'],d['Lime'],d['Blue'])
 ```
 
 3. Faites une fonction `patchwork2` qui fait ce qu'on veut
@@ -283,18 +295,30 @@ def patchwork2(color_names, side=10, background_color="DarkGray"):
     '''
     # your goes goes here
     ...
-```
-
-```{code-cell} ipython3
-# ou encore
-
-#plt.imshow(patchwork2(color_names, side=20, background="DarkGray"));
+    colors_liste = []
+    for elem in color_names :
+        colors_liste.append(d[elem])
+    
+    (l,c)=rectangle_size(len(colors_liste))
+    I,J=np.indices((l*side,c*side))
+    indices = I//side*c+J//side
+    colormap = np.empty((l*c,3),np.uint8)
+    colormap[:len(colors_liste)]=np.array(colors_liste)
+    colormap[len(colors_liste):]=d[background_color]
+    p = colormap[indices]
+    return p
 ```
 
 ```{code-cell} ipython3
 # et pour le tester
 
-#plt.imshow(patchwork2(color_names));
+plt.imshow(patchwork2(color_names))
+```
+
+```{code-cell} ipython3
+# ou encore
+
+plt.imshow(patchwork2(color_names, side=20, background_color="DarkGray"))
 ```
 
 4. Tirez aléatoirement une liste de couleurs et appliquez votre fonction à ces couleurs.
@@ -308,6 +332,11 @@ def patchwork2(color_names, side=10, background_color="DarkGray"):
 
 ```{code-cell} ipython3
 # votre code
+colors_white = []
+for key in d:
+    if 'White' in key:
+        colors_white.append(key)
+plt.imshow(patchwork2(colors_white))
 ```
 
 6. Appliquez la fonction à toutes les couleurs du fichier  
@@ -315,6 +344,10 @@ et sauver ce patchwork dans le fichier `patchwork.png` avec `plt.imsave`
 
 ```{code-cell} ipython3
 # votre code
+all_colors = []
+for key in d:
+    all_colors.append(key)
+plt.imsave('patchwork.png',patchwork2(all_colors))
 ```
 
 7. Relisez et affichez votre fichier  
@@ -322,6 +355,8 @@ et sauver ce patchwork dans le fichier `patchwork.png` avec `plt.imsave`
 
 ```{code-cell} ipython3
 # votre code
+im = plt.imread('patchwork.png')
+plt.imshow(im)
 ```
 
 vous devriez obtenir quelque chose comme ceci
