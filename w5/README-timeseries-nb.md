@@ -406,7 +406,7 @@ on the plot above they show as a few sharp drops down to 0, in the late summer a
 daily[daily==0]
 ```
 
-1. Le 22/08/2026, le 23/09/2026 et le 04/10/2026, le nombre de vélos est nul. 
+1. Le 22/08/2026, le 23/09/2026 et le 04/10/2026, le nombre de vélos est nul.
 
 ```{code-cell} ipython3
 df.loc['2026-08-22']
@@ -554,3 +554,7 @@ both.corr()
   - it picks one counter, and exports the hours in local time **with the UTC offset**, as the original does
   - and it writes the days of the weather in the French format on purpose
 * the data is frozen, no need to refresh it
+
+```{code-cell} ipython3
+
+```
