@@ -49,8 +49,8 @@ plt.rcParams["figure.figsize"] = (10, 4)
 
 ```{code-cell} ipython3
 # optional
-import itables
-itables.init_notebook_mode()
+#import itables
+#itables.init_notebook_mode()
 ```
 
 ## 0. the data
@@ -376,7 +376,8 @@ so, to move from one point per hour to one point per day
 :tags: [level_basic]
 
 # your code
-daily = df.resample("1d")['n_bikes'].sum()
+resampled = df.resample("1d")
+daily = resampled['n_bikes'].sum()
 daily.plot()
 ```
 
@@ -402,6 +403,31 @@ on the plot above they show as a few sharp drops down to 0, in the late summer a
 :tags: [level_basic]
 
 # your code
+daily[daily==0]
+```
+
+1. Le 22/08/2026, le 23/09/2026 et le 04/10/2026, le nombre de vélos est nul. 
+
+```{code-cell} ipython3
+df.loc['2026-08-22']
+```
+
+```{code-cell} ipython3
+df.loc['2026-08-22','n_bikes'].sum()
+```
+
+Ces jours-là ne contiennent aucune valeur et sum() renvoie 0 pour ce type de groupes.
+
+```{code-cell} ipython3
+daily = resampled['n_bikes'].sum(min_count=1)
+```
+
+```{code-cell} ipython3
+daily['2026-09':'2026-10'].plot(marker=".")
+```
+
+```{code-cell} ipython3
+plot() ne trace pas les points de valeurs NaN.
 ```
 
 ### weekly and monthly
@@ -420,6 +446,35 @@ on the plot above they show as a few sharp drops down to 0, in the late summer a
 :tags: [level_basic]
 
 # your code
+resampled_month = df.resample("1MS")
+per_month = resampled_month['n_bikes'].sum()
+per_month.plot(marker=".")
+```
+
+```{code-cell} ipython3
+resampled_week = df.resample("1W")
+per_week = resampled_week['n_bikes'].sum()
+per_week.plot(marker=".")
+```
+
+```{code-cell} ipython3
+per_month.head()
+```
+
+```{code-cell} ipython3
+per_week.head()
+```
+
+1. Les mois commencent le premier jour de chaque mois et les semaines commencent le dimanche.
+
+```{code-cell} ipython3
+average_per_day  = daily.resample("1MS").mean()
+average_per_day.plot(marker=".")
+```
+
+```{code-cell} ipython3
+values_per_month = daily.resample("1MS").agg(['sum','mean','max'])
+values_per_month
 ```
 
 :::{admonition} hint
@@ -449,6 +504,14 @@ does the weather make a difference ? let us find out with the second file
 :tags: [level_basic]
 
 # your code
+weather = pd.read_csv('data/weather.csv')
+weather['jour'] = pd.to_datetime(weather.jour, format="%d/%m/%Y")
+
+weather = weather.set_index('jour')
+
+daily = daily.tz_localize(None)
+both = pd.merge(daily,weather,left_index=True,right_index=True)
+both
 ```
 
 ### a look at the result
@@ -462,15 +525,26 @@ does the weather make a difference ? let us find out with the second file
 1. what is the correlation between the 3 columns ?  
    hint: `corr()`
 
++++
+
+## appendix: where the data comes from
+
 ```{code-cell} ipython3
 :tags: [level_basic]
 
 # your code
+rainy_days_avg = both.loc[both['rain_mm']>=1,'n_bikes'].mean()
+other_days_avg = both.loc[both['rain_mm']<1,'n_bikes'].mean()
+print(f"Il y a moins de vélos les jours pluvieux : {rainy_days_avg<other_days_avg}")
 ```
 
-## appendix: where the data comes from
+```{code-cell} ipython3
+both.plot.scatter('temperature','n_bikes')
+```
 
-+++
+```{code-cell} ipython3
+both.corr()
+```
 
 * the bike counts come from the open data portal of the city of Paris, dataset *comptage vélo - données compteurs*  
   <https://opendata.paris.fr>
