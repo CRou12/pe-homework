@@ -4,6 +4,8 @@ jupytext:
   text_representation:
     extension: .md
     format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.19.5
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -22,6 +24,10 @@ to run this code on your own laptop,
 ```
 
 ```{code-cell} ipython3
+%pip install geopandas
+```
+
+```{code-cell} ipython3
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -29,7 +35,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 
 # activate this if running under jlab
-# %matplotlib ipympl
+%matplotlib ipympl
 ```
 
 ## 1. loading presidential averages
@@ -45,6 +51,19 @@ load this file into a dataframe `df`; make sure to
 :tags: [level_basic]
 
 # your code
+df = pd.read_csv('data/DATA.csv')
+```
+
+```{code-cell} ipython3
+df.dtypes
+```
+
+```{code-cell} ipython3
+df['date'] = pd.to_datetime(df.date)
+```
+
+```{code-cell} ipython3
+df = df.set_index(df.columns[0])
 ```
 
 ## 2. plotting
@@ -61,6 +80,14 @@ In other words, you should obtain something like this - we will arbitrarily focu
 :tags: [level_basic]
 
 # your code
+df['year'] = df.date.dt.year
+df_2024 = df[df['year']==2024]
+table = df_2024.pivot_table(
+    values='pct_estimate',
+    index='date',
+    columns='candidate',
+)
+table.plot()
 ```
 
 ## 3. use interactivity
@@ -70,10 +97,16 @@ using the interactive view (if under Jupyter Lab) make sure to use `%matplotlib 
 - the date for the first data about Kamala Harris
 
 ```{code-cell} ipython3
+%matplotlib ipympl
+table.plot()
+```
+
+```{code-cell} ipython3
 :tags: [level_basic]
 
 # your answer in english - as a comment
-# ...
+# Date for the last data about Joe Biden : 2024-07-21
+# Date for the first data about Kamala Harris : 2024-07-24
 ```
 
 also write a line of code to compute this second date
@@ -83,7 +116,9 @@ also write a line of code to compute this second date
 
 # your code
 
-first_harris_date = ...
+index = df.sort_values(by=['date'])[df['candidate']=='Harris'].loc[:,'pct_estimate'].notna().index[0]
+first_date_harris = df.loc[index,'date']
+first_date_harris
 ```
 
 ## 4. race end
@@ -97,6 +132,24 @@ from this part we will focus on the period after `first_harris_date`
 :tags: [level_basic]
 
 # your code
+# 1
+
+df_harris = df[df['date']>=first_date_harris]
+df_harris['candidate'].unique()
+```
+
+1. Il reste 3 candidats.
+
+```{code-cell} ipython3
+# 2
+
+df_harris = df_harris[df_harris['candidate']!='Kennedy']
+df_harris['candidate'].unique()
+```
+
+```{code-cell} ipython3
+# 3
+df_harris['candidate'].value_counts()
 ```
 
 ## 5: loading shapefiles with geopandas
@@ -121,11 +174,14 @@ gdf = gpd.read_file("data/us-states.zip")
 :tags: [level_basic]
 
 # your code
+len(gdf)
 ```
 
 2. what are the various column types
 
-+++
+```{code-cell} ipython3
+gdf.dtypes
+```
 
 as you can see, this is almost like a regular dataframe, except for the `geometry` column; which is a geographic entity, hence the term `geo-dataframe`
 
@@ -147,6 +203,10 @@ more details on this topic can be found here:
 - <https://idl.uw.edu/visualization-curriculum/altair_cartographic.html>
 - <https://altair-viz.github.io/altair-tutorial/notebooks/09-Geographic-plots.html>
 ````
+
+```{code-cell} ipython3
+%pip install altair
+```
 
 ```{code-cell} ipython3
 import altair as alt
@@ -293,6 +353,7 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+gdf['NAME'].unique()
 ```
 
 2. for this data, compute a table with the state as index, and the two contestants polls (averaged)
@@ -301,6 +362,15 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+pivot = df_harris.pivot_table(
+    values='pct_estimate',
+    index='state',
+    columns='candidate',
+    aggfunc='mean'
+)
+
+merge = gdf.merge(pivot,left_on='NAME',right_on='state')
+merge['ratio']=merge['Harris']/merge['Trump']
 ```
 
 3. using what you've seen in the digression, and what you will gather if needed on the Internet,  produce the above map
@@ -309,6 +379,16 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+(
+    alt.Chart(merge)
+    .mark_geoshape()
+    .encode(
+        color=alt.Color(field="ratio", type="quantitative", title="Harris/Trump"),
+        tooltip=["NAME", "ratio"],
+    )
+    .properties(width=600)
+    .project('albersUsa')
+)
 ```
 
 ## 7. outlining swing states
@@ -346,6 +426,21 @@ SWING_STATES = [
 :tags: [level_basic]
 
 # your code
+base = alt.Chart(merge).mark_geoshape().encode(
+    color=alt.Color(field="ratio", type="quantitative", title="Harris/Trump"),    
+    tooltip=["NAME", "ratio"]
+)
+
+swing_states = merge[merge['NAME'].isin(SWING_STATES)]
+
+contour = alt.Chart(swing_states).mark_geoshape(
+    filled=False,
+    stroke='black', 
+    strokeWidth=3
+)
+
+chart = base+contour
+chart.properties(width=600).project('albersUsa')
 ```
 
 ## 8. filling gaps (optional)

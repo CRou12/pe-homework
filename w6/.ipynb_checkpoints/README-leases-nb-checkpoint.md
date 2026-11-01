@@ -4,14 +4,12 @@ jupytext:
   text_representation:
     extension: .md
     format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.19.5
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
   name: python3
-language_info:
-  name: python
-  pygments_lexer: ipython3
-  nbconvert_exporter: python
 ---
 
 (label-tp-leases)=
@@ -50,6 +48,7 @@ here's an example of the outputs we will obtain
 ```{code-cell} ipython3
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 ```
 
 1. make sure to use matplotlib in interactive mode - aka `ipympl`
@@ -58,6 +57,7 @@ import matplotlib.pyplot as plt
 :tags: [level_basic]
 
 # your code
+%matplotlib ipympl
 ```
 
 2. optional: setup itables, so that we can have scrollable tables
@@ -66,6 +66,9 @@ import matplotlib.pyplot as plt
 :tags: [level_basic]
 
 # your code
+%pip install itables
+import itables
+itables.init_notebook_mode()
 ```
 
 ## the data
@@ -85,6 +88,8 @@ surely the columns dtypes need some care
 :tags: [level_basic]
 
 # your code
+leases['beg'] = pd.to_datetime(leases.beg)
+leases['end'] = pd.to_datetime(leases.end)
 ```
 
 ```{code-cell} ipython3
@@ -103,6 +108,9 @@ check that the data is well-formed, i.e. **the `end`** timestamp **happens after
 :tags: [level_basic]
 
 # your code
+erreurs = leases['beg'] > leases['end']
+nb_erreurs = erreurs.sum()
+print(f"nombre d'erreurs : {nb_erreurs}")
 ```
 
 ### are there any overlapping events ?
@@ -121,6 +129,7 @@ nothing in the rest depends on this question, so if you find this too hard, you 
 :tags: [level_basic]
 
 # your code
+leases = leases.sort_values(by='beg')
 ```
 
 ### timespan
@@ -131,6 +140,10 @@ What is the timespan covered by the dataset (**earliest** and **latest** events,
 :tags: [level_basic]
 
 # your code
+earliest = leases.iloc[0,0]
+latest = leases.iloc[-1,0]
+timespan = latest - earliest 
+print(f"timespan = {timespan}")
 ```
 
 ### aggregated duration
@@ -142,6 +155,12 @@ write a code that computes the **overall reservation time**, as well as the **av
 :tags: [level_basic]
 
 # your code
+leases['reservation_time'] = leases['end']-leases['beg']
+overall_reservation_time = leases['reservation_time'].sum()
+print(f"overall_resevation_time : {overall_reservation_time}")
+
+average_usage_ratio = (leases['reservation_time']/overall_reservation_time).mean()
+print(f"average_usage_ratio : {average_usage_ratio}")
 ```
 
 ## visualization - grouping by period
@@ -179,6 +198,21 @@ we'll make cosmetic improvements below, and [the final results look like this](#
 :tags: [level_basic]
 
 # your code
+by_week = leases.resample("1W",on='beg')
+by_month = leases.resample("ME",on='beg')
+by_year = leases.resample("YE",on='beg')
+
+plt.figure()
+by_week['reservation_time'].sum().plot.bar()
+plt.show()
+
+plt.figure()
+by_month['reservation_time'].sum().plot.bar()
+plt.show()
+
+plt.figure()
+by_year['reservation_time'].sum().plot.bar()
+plt.show()
 ```
 
 ### improve the title and bottom ticks
@@ -214,12 +248,6 @@ SPACES = {
 }
 ```
 
-```{code-cell} ipython3
-:tags: [level_basic]
-
-# your code
-```
-
 ### a function to convert to hours
 
 you are to write a function that converts a `pd.Timedelta` into a number of hours  
@@ -232,7 +260,7 @@ you are to write a function that converts a `pd.Timedelta` into a number of hour
 # your code
 
 def convert_timedelta_to_hours(timedelta: pd.Timedelta) -> int:
-    pass
+    return timedelta.total_seconds()//3600+(timedelta.total_seconds()%3600!=0)
 ```
 
 ```{code-cell} ipython3
@@ -306,6 +334,12 @@ what's the most effective way to see how many regions and how many countries per
 :tags: [level_basic]
 
 # your code
+countries['region'].unique()
+```
+
+```{code-cell} ipython3
+by_region = countries.groupby('region')
+by_region.count()
 ```
 
 ### attach a region to each lease
@@ -320,6 +354,8 @@ most likely your first move is to tag all leases with a `region` column
 :tags: [level_basic]
 
 # your code
+merge = leases.merge(countries,left_on='country',right_on='name')
+merge
 ```
 
 ### visu by period by region
