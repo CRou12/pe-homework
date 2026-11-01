@@ -441,8 +441,6 @@ contour = alt.Chart(swing_states).mark_geoshape(
 
 chart = base+contour
 chart.properties(width=600).project('albersUsa')
-
-
 ```
 
 ## 8. filling gaps (optional)

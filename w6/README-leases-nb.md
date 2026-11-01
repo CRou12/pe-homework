@@ -248,61 +248,6 @@ SPACES = {
 }
 ```
 
-```{code-cell} ipython3
-:tags: [level_basic]
-
-plt.figure()
-w = by_week["reservation_time"].sum()
-ax = w.plot(kind="bar", title="total usage every week")
-
-# --- LA CORRECTION "ANTI-PÂTÉ" ---
-pas = 10
-positions = range(0, len(w), pas)
-labels = [str(x) for x in w.index[::pas]]
-
-# 1. On efface d'abord la mémoire des anciens labels
-ax.set_xticks([])
-ax.set_xticklabels([])
-
-# 2. On applique proprement le pas et les vrais labels
-ax.set_xticks(positions)
-ax.set_xticklabels(labels, rotation=45, ha="right")
-
-plt.tight_layout()
-plt.show()
-```
-
-```{code-cell} ipython3
-plt.figure()
-by_month['reservation_time'].sum().plot.bar(title="total usage every month")
-plt.show()
-
-plt.figure()
-by_year['reservation_time'].sum().plot.bar(title="total usage every year")
-plt.show()
-```
-
-```{code-cell} ipython3
-import matplotlib.pyplot as plt
-import pandas as pd
-
-# Données d'exemple
-df = pd.DataFrame({"Valeurs": range(0, 100, 2)})
-
-# 1. Tracer le graphique et récupérer l'objet 'ax'
-ax = df.plot(kind="line")
-
-# 2. Définir le pas (ex: afficher un tick toutes les 10 lignes)
-pas = 10
-ax.set_xticks(df.index[::pas])
-
-plt.show()
-```
-
-```{code-cell} ipython3
-w
-```
-
 ### a function to convert to hours
 
 you are to write a function that converts a `pd.Timedelta` into a number of hours  
@@ -389,6 +334,12 @@ what's the most effective way to see how many regions and how many countries per
 :tags: [level_basic]
 
 # your code
+countries['region'].unique()
+```
+
+```{code-cell} ipython3
+by_region = countries.groupby('region')
+by_region.count()
 ```
 
 ### attach a region to each lease
@@ -403,6 +354,8 @@ most likely your first move is to tag all leases with a `region` column
 :tags: [level_basic]
 
 # your code
+merge = leases.merge(countries,left_on='country',right_on='name')
+merge
 ```
 
 ### visu by period by region
